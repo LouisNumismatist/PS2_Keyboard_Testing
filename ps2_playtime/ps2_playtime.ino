@@ -1,60 +1,60 @@
-#define KEY_A 0x38
-#define KEY_B 0x4C
-#define KEY_C 0x84
-#define KEY_D 0xC4
-#define KEY_E 0x24
-#define KEY_F 0xD4
-#define KEY_G 0x2C
-#define KEY_H 0xCC
-#define KEY_I 0xC2
-#define KEY_J 0xDC
-#define KEY_K 0x42
-#define KEY_L 0xD2
-#define KEY_M 0x5C
-#define KEY_N 0x8C
-#define KEY_O 0x22
-#define KEY_P 0xB2
-#define KEY_Q 0xA8
-#define KEY_R 0xB4
-#define KEY_S 0xD8
-#define KEY_T 0x34
-#define KEY_U 0x3C
-#define KEY_V 0x54
-#define KEY_W 0xB8
-#define KEY_X 0x44
-#define KEY_Y 0xAC
-#define KEY_Z 0x58
+#define PS2_KEY_A 0x38
+#define PS2_KEY_B 0x4C
+#define PS2_KEY_C 0x84
+#define PS2_KEY_D 0xC4
+#define PS2_KEY_E 0x24
+#define PS2_KEY_F 0xD4
+#define PS2_KEY_G 0x2C
+#define PS2_KEY_H 0xCC
+#define PS2_KEY_I 0xC2
+#define PS2_KEY_J 0xDC
+#define PS2_KEY_K 0x42
+#define PS2_KEY_L 0xD2
+#define PS2_KEY_M 0x5C
+#define PS2_KEY_N 0x8C
+#define PS2_KEY_O 0x22
+#define PS2_KEY_P 0xB2
+#define PS2_KEY_Q 0xA8
+#define PS2_KEY_R 0xB4
+#define PS2_KEY_S 0xD8
+#define PS2_KEY_T 0x34
+#define PS2_KEY_U 0x3C
+#define PS2_KEY_V 0x54
+#define PS2_KEY_W 0xB8
+#define PS2_KEY_X 0x44
+#define PS2_KEY_Y 0xAC
+#define PS2_KEY_Z 0x58
 
-#define KEY_0 0xA2
-#define KEY_1 0x68
-#define KEY_2 0x78
-#define KEY_3 0x64
-#define KEY_4 0xA4
-#define KEY_5 0x74
-#define KEY_6 0x6C
-#define KEY_7 0xBC
-#define KEY_8 0x7C
-#define KEY_9 0x62
+#define PS2_KEY_0 0xA2
+#define PS2_KEY_1 0x68
+#define PS2_KEY_2 0x78
+#define PS2_KEY_3 0x64
+#define PS2_KEY_4 0xA4
+#define PS2_KEY_5 0x74
+#define PS2_KEY_6 0x6C
+#define PS2_KEY_7 0xBC
+#define PS2_KEY_8 0x7C
+#define PS2_KEY_9 0x62
 
-#define KEY_NUM_0 0x0E
-#define KEY_NUM_1 0x96
-#define KEY_NUM_2 0x4E
-#define KEY_NUM_3 0x5E
-#define KEY_NUM_4 0xD6
-#define KEY_NUM_5 0xCE
-#define KEY_NUM_6 0x2E
-#define KEY_NUM_7 0x36
-#define KEY_NUM_8 0xAE
-#define KEY_NUM_9 0xBE
+#define PS2_KEY_NUM_0 0x0E
+#define PS2_KEY_NUM_1 0x96
+#define PS2_KEY_NUM_2 0x4E
+#define PS2_KEY_NUM_3 0x5E
+#define PS2_KEY_NUM_4 0xD6
+#define PS2_KEY_NUM_5 0xCE
+#define PS2_KEY_NUM_6 0x2E
+#define PS2_KEY_NUM_7 0x36
+#define PS2_KEY_NUM_8 0xAE
+#define PS2_KEY_NUM_9 0xBE
 
-#define KEY_SPACEBAR 0x94
-#define KEY_ENTER 0x5A
-#define KEY_ESC 0x6E
-#define KEY_TAB 0xB0
+#define PS2_KEY_SPACEBAR 0x94
+#define PS2_KEY_ENTER 0x5A
+#define PS2_KEY_ESC 0x6E
+#define PS2_KEY_TAB 0xB0
 
-#define KEY_NUM_LOCK 0xEE
-#define KEY_CAPS_LOCK 0x1A
-#define KEY_SCROLL_LOCK 0x7E
+#define PS2_KEY_NUM_LOCK 0xEE
+#define PS2_KEY_CAPS_LOCK 0x1A
+#define PS2_KEY_SCROLL_LOCK 0x7E
 
 #define PIN_DTA 35
 #define PIN_CLK 34
@@ -68,19 +68,43 @@ volatile bool message_ready = false;
 
 bool ignore_next = false;
 
+void initPS2(void);
+void initBT(void);
+
+void updatePS2(void);
+void updateBT(void);
+
 void ps2_interrupt_handler(void);
-void interpretKey(uint16_t key_code);
+void interpretKey(uint16_t PS2_key_code);
+
+void sendKeyBT(uint8_t key_code);
 
 void setup() {
   Serial.begin(9600);
 
+  initPS2();
+
+  initBT();
+}
+
+void loop() {
+  updatePS2();
+
+  updateBT();
+}
+
+void initPS2(void) {
   pinMode(PIN_DTA, INPUT_PULLUP);
   pinMode(PIN_CLK, INPUT_PULLUP);
 
   attachInterrupt(digitalPinToInterrupt(PIN_CLK), ps2_interrupt_handler, FALLING);
 }
 
-void loop() {
+void initBT(void) {
+  
+}
+
+void updatePS2(void) {
   static uint8_t count = 0;
 
   if (message_ready) {
@@ -94,7 +118,7 @@ void loop() {
         ignore_next = false;
       }
       else {
-        if (message == KEY_TAB){
+        if (message == PS2_KEY_TAB){
           Serial.println();
           HEX_MODE = !HEX_MODE;
         }
@@ -106,11 +130,16 @@ void loop() {
         else {
           interpretKey(message);
         }
+        // sendKeyBT(0x04);
       }
     }
 
     message_ready = false;
   }
+}
+
+void updateBT(void) {
+  
 }
 
 void ps2_interrupt_handler(void) {
@@ -134,69 +163,73 @@ void ps2_interrupt_handler(void) {
   }
 }
 
-void interpretKey(uint16_t key_code) {
-  switch (key_code) {
-    case KEY_A: Serial.print("A"); break;
-    case KEY_B: Serial.print("B"); break;
-    case KEY_C: Serial.print("C"); break;
-    case KEY_D: Serial.print("D"); break;
-    case KEY_E: Serial.print("E"); break;
-    case KEY_F: Serial.print("F"); break;
-    case KEY_G: Serial.print("G"); break;
-    case KEY_H: Serial.print("H"); break;
-    case KEY_I: Serial.print("I"); break;
-    case KEY_J: Serial.print("J"); break;
-    case KEY_K: Serial.print("K"); break;
-    case KEY_L: Serial.print("L"); break;
-    case KEY_M: Serial.print("M"); break;
-    case KEY_N: Serial.print("N"); break;
-    case KEY_O: Serial.print("O"); break;
-    case KEY_P: Serial.print("P"); break;
-    case KEY_Q: Serial.print("Q"); break;
-    case KEY_R: Serial.print("R"); break;
-    case KEY_S: Serial.print("S"); break;
-    case KEY_T: Serial.print("T"); break;
-    case KEY_U: Serial.print("U"); break;
-    case KEY_V: Serial.print("V"); break;
-    case KEY_W: Serial.print("W"); break;
-    case KEY_X: Serial.print("X"); break;
-    case KEY_Y: Serial.print("Y"); break;
-    case KEY_Z: Serial.print("Z"); break;
+void interpretKey(uint16_t PS2_key_code) {
+  switch (PS2_key_code) {
+    case PS2_KEY_A: Serial.print("A"); break;
+    case PS2_KEY_B: Serial.print("B"); break;
+    case PS2_KEY_C: Serial.print("C"); break;
+    case PS2_KEY_D: Serial.print("D"); break;
+    case PS2_KEY_E: Serial.print("E"); break;
+    case PS2_KEY_F: Serial.print("F"); break;
+    case PS2_KEY_G: Serial.print("G"); break;
+    case PS2_KEY_H: Serial.print("H"); break;
+    case PS2_KEY_I: Serial.print("I"); break;
+    case PS2_KEY_J: Serial.print("J"); break;
+    case PS2_KEY_K: Serial.print("K"); break;
+    case PS2_KEY_L: Serial.print("L"); break;
+    case PS2_KEY_M: Serial.print("M"); break;
+    case PS2_KEY_N: Serial.print("N"); break;
+    case PS2_KEY_O: Serial.print("O"); break;
+    case PS2_KEY_P: Serial.print("P"); break;
+    case PS2_KEY_Q: Serial.print("Q"); break;
+    case PS2_KEY_R: Serial.print("R"); break;
+    case PS2_KEY_S: Serial.print("S"); break;
+    case PS2_KEY_T: Serial.print("T"); break;
+    case PS2_KEY_U: Serial.print("U"); break;
+    case PS2_KEY_V: Serial.print("V"); break;
+    case PS2_KEY_W: Serial.print("W"); break;
+    case PS2_KEY_X: Serial.print("X"); break;
+    case PS2_KEY_Y: Serial.print("Y"); break;
+    case PS2_KEY_Z: Serial.print("Z"); break;
 
-    case KEY_0: Serial.print("0"); break;
-    case KEY_1: Serial.print("1"); break;
-    case KEY_2: Serial.print("2"); break;
-    case KEY_3: Serial.print("3"); break;
-    case KEY_4: Serial.print("4"); break;
-    case KEY_5: Serial.print("5"); break;
-    case KEY_6: Serial.print("6"); break;
-    case KEY_7: Serial.print("7"); break;
-    case KEY_8: Serial.print("8"); break;
-    case KEY_9: Serial.print("9"); break;
+    case PS2_KEY_0: Serial.print("0"); break;
+    case PS2_KEY_1: Serial.print("1"); break;
+    case PS2_KEY_2: Serial.print("2"); break;
+    case PS2_KEY_3: Serial.print("3"); break;
+    case PS2_KEY_4: Serial.print("4"); break;
+    case PS2_KEY_5: Serial.print("5"); break;
+    case PS2_KEY_6: Serial.print("6"); break;
+    case PS2_KEY_7: Serial.print("7"); break;
+    case PS2_KEY_8: Serial.print("8"); break;
+    case PS2_KEY_9: Serial.print("9"); break;
 
-    case KEY_NUM_0: Serial.print("0"); break;
-    case KEY_NUM_1: Serial.print("1"); break;
-    case KEY_NUM_2: Serial.print("2"); break;
-    case KEY_NUM_3: Serial.print("3"); break;
-    case KEY_NUM_4: Serial.print("4"); break;
-    case KEY_NUM_5: Serial.print("5"); break;
-    case KEY_NUM_6: Serial.print("6"); break;
-    case KEY_NUM_7: Serial.print("7"); break;
-    case KEY_NUM_8: Serial.print("8"); break;
-    case KEY_NUM_9: Serial.print("9"); break;
+    case PS2_KEY_NUM_0: Serial.print("0"); break;
+    case PS2_KEY_NUM_1: Serial.print("1"); break;
+    case PS2_KEY_NUM_2: Serial.print("2"); break;
+    case PS2_KEY_NUM_3: Serial.print("3"); break;
+    case PS2_KEY_NUM_4: Serial.print("4"); break;
+    case PS2_KEY_NUM_5: Serial.print("5"); break;
+    case PS2_KEY_NUM_6: Serial.print("6"); break;
+    case PS2_KEY_NUM_7: Serial.print("7"); break;
+    case PS2_KEY_NUM_8: Serial.print("8"); break;
+    case PS2_KEY_NUM_9: Serial.print("9"); break;
 
-    case KEY_SPACEBAR: Serial.print(" "); break;
-    case KEY_ENTER: Serial.print("\n"); break;
-    case KEY_ESC: break;
-    case KEY_TAB: break;
+    case PS2_KEY_SPACEBAR: Serial.print(" "); break;
+    case PS2_KEY_ENTER: Serial.print("\n"); break;
+    case PS2_KEY_ESC: break;
+    case PS2_KEY_TAB: break;
 
-    case KEY_NUM_LOCK: break;
-    case KEY_CAPS_LOCK: break;
-    case KEY_SCROLL_LOCK: break;
+    case PS2_KEY_NUM_LOCK: break;
+    case PS2_KEY_CAPS_LOCK: break;
+    case PS2_KEY_SCROLL_LOCK: break;
 
     default:
       Serial.print("<N/A>");
       break;
   }
+}
+
+void sendKeyBT(uint8_t key_code) {
+  
 }
 
