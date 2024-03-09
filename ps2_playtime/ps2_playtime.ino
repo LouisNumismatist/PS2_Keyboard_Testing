@@ -56,8 +56,8 @@
 #define KEY_CAPS_LOCK 0x1A
 #define KEY_SCROLL_LOCK 0x7E
 
-#define PIN_DTA 2
-#define PIN_CLK 3
+#define PIN_DTA 35
+#define PIN_CLK 34
 
 #define MESSAGE_LENGTH 11
 
