@@ -53,6 +53,11 @@
 #define PS2_KEY_ENTER 0x5A
 #define PS2_KEY_ESC 0x6E
 #define PS2_KEY_TAB 0xB0
+#define PS2_KEY_BACKSPACE 0x66
+#define PS2_KEY_DELETE 0x8E
+
+#define PS2_KEY_PERIOD 0x92
+#define PS2_KEY_COMMA 0x82
 
 #define PS2_KEY_NUM_LOCK 0xEE
 #define PS2_KEY_CAPS_LOCK 0x1A
@@ -132,10 +137,7 @@ void updatePS2(void) {
           Serial.print(message, HEX);
           Serial.print(",");
         }
-        else {
-          interpretKey(message);
-        }
-        // sendKeyBT(0x04);
+        interpretKey(message);
       }
     }
 
@@ -219,10 +221,14 @@ void interpretKey(uint16_t PS2_key_code) {
     case PS2_KEY_NUM_8: sendKeyBT('8'); break;
     case PS2_KEY_NUM_9: sendKeyBT('9'); break;
 
-    case PS2_KEY_SPACEBAR: Serial.print(" "); break;
-    case PS2_KEY_ENTER: Serial.print("\n"); break;
+    case PS2_KEY_SPACEBAR: sendKeyBT(' '); break;
+    case PS2_KEY_ENTER: sendKeyBT(KEY_RETURN); break;
     case PS2_KEY_ESC: break;
     case PS2_KEY_TAB: break;
+    case PS2_KEY_BACKSPACE: sendKeyBT(KEY_BACKSPACE); break;
+    case PS2_KEY_DELETE: sendKeyBT(KEY_DELETE); break;
+    case PS2_KEY_PERIOD: sendKeyBT('.'); break;
+    case PS2_KEY_COMMA: sendKeyBT(','); break;
 
     case PS2_KEY_NUM_LOCK: break;
     case PS2_KEY_CAPS_LOCK: break;
