@@ -49,12 +49,27 @@
 #define PS2_KEY_NUM_8 0xAE
 #define PS2_KEY_NUM_9 0xBE
 
+#define PS2_KEY_F01 0xA0
+#define PS2_KEY_F02 0x60
+#define PS2_KEY_F03 0x20
+#define PS2_KEY_F04 0x30
+#define PS2_KEY_F05 0xC0
+#define PS2_KEY_F06 0xD0
+#define PS2_KEY_F07 0xC1
+#define PS2_KEY_F08 0x50
+#define PS2_KEY_F09 0x80
+#define PS2_KEY_F10 0x90
+#define PS2_KEY_F11 0x1E
+#define PS2_KEY_F12 0xE0
+
 #define PS2_KEY_SPACEBAR 0x94
 #define PS2_KEY_ENTER 0x5A
 #define PS2_KEY_ESC 0x6E
 #define PS2_KEY_TAB 0xB0
 #define PS2_KEY_BACKSPACE 0x66
 #define PS2_KEY_DELETE 0x8E
+#define PS2_SHIFT_LEFT 0x48
+#define PS2_SHIFT_RIGHT 0x9A
 
 #define PS2_KEY_PERIOD 0x92
 #define PS2_KEY_COMMA 0x82
@@ -63,8 +78,8 @@
 #define PS2_KEY_CAPS_LOCK 0x1A
 #define PS2_KEY_SCROLL_LOCK 0x7E
 
-#define PIN_DTA 35
-#define PIN_CLK 34
+#define PIN_DTA 33
+#define PIN_CLK 32
 
 #define MESSAGE_LENGTH 11
 
@@ -74,6 +89,7 @@ volatile uint16_t message = 0;
 volatile bool message_ready = false;
 
 bool ignore_next = false;
+bool caps_on = false;
 
 BleKeyboard BTKeyboard;
 
@@ -81,10 +97,11 @@ void initPS2(void);
 void initBT(void);
 
 void updatePS2(void);
-void updateBT(void);
 
 void ps2_interrupt_handler(void);
 void interpretKey(uint16_t PS2_key_code);
+uint8_t getParityBit(uint8_t data);
+void toggleCapsLock(void);
 
 void sendKeyBT(uint8_t key_code);
 
@@ -98,8 +115,6 @@ void setup() {
 
 void loop() {
   updatePS2();
-
-  updateBT();
 }
 
 void initPS2(void) {
@@ -118,7 +133,15 @@ void updatePS2(void) {
   static uint8_t count = 0;
 
   if (message_ready) {
+
+    uint8_t parity = (uint8_t)((message >> 1) & 0x01);
+
     message = (message >> 2) & 0xFF;
+
+    if (getParityBit((uint8_t)message) != parity) {
+      Serial.println("Parity ERROR.");
+      return;
+    }
 
     if (message == 0x0F) {
       ignore_next = true;
@@ -143,10 +166,6 @@ void updatePS2(void) {
 
     message_ready = false;
   }
-}
-
-void updateBT(void) {
-  
 }
 
 void ps2_interrupt_handler(void) {
@@ -231,12 +250,35 @@ void interpretKey(uint16_t PS2_key_code) {
     case PS2_KEY_COMMA: sendKeyBT(','); break;
 
     case PS2_KEY_NUM_LOCK: break;
-    case PS2_KEY_CAPS_LOCK: break;
+    case PS2_KEY_CAPS_LOCK: toggleCapsLock(); break;
     case PS2_KEY_SCROLL_LOCK: break;
 
     default:
       Serial.print("<N/A>");
       break;
+  }
+}
+
+uint8_t getParityBit(uint8_t data) {
+  uint8_t parity = 0x00;
+  
+  for (uint8_t i = 0; i < 8; i++) {
+    parity += (data >> i) & 0x01;
+  }
+
+  return ~parity & 0x01;
+}
+
+void toggleCapsLock(void) {
+  caps_on = !caps_on;
+
+  Serial.print("Caps Lock ");
+
+  if (caps_on) {
+    Serial.println("ON");
+  }
+  else {
+    Serial.println("OFF");
   }
 }
 
@@ -246,6 +288,10 @@ void sendKeyBT(uint8_t key_code) {
     return;
   }
 
+  if (!caps_on && key_code >= 65 &&key_code <= 90) {
+    key_code += 32;
+  }
+
   Serial.println("Sending key...");
 
   BTKeyboard.write(key_code);
@@ -253,4 +299,3 @@ void sendKeyBT(uint8_t key_code) {
   Serial.print("Sent key! -> ");
   Serial.println(char(key_code));
 }
-
